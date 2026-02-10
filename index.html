@@ -10,46 +10,53 @@
     <div class="container">
         <!-- Header -->
         <header class="header">
-            <h1 class="title">🏠 ChoreFlow</h1>
-            <p class="subtitle">Family Task Manager</p>
-            <p class="date" id="currentDate"></p>
+            <div class="header-left">
+                <h1 class="title">🏠 Axis Chores</h1>
+            </div>
+            <nav class="header-nav">
+                <button class="tab-btn active" data-tab="dashboard">
+                    📊 Dashboard
+                </button>
+                <button class="tab-btn" data-tab="calendar">
+                    📅 Calendar
+                </button>
+                <button class="tab-btn" data-tab="add-chore">
+                    ➕ Add Chore
+                </button>
+                <button class="tab-btn" data-tab="rewards">
+                    💎 Rewards
+                </button>
+                <button class="tab-btn" data-tab="leaderboard">
+                    🏆 Leaderboard
+                </button>
+                <button class="tab-btn" data-tab="family">
+                    👥 Family
+                </button>
+            </nav>
+            <div class="header-right">
+                <p class="date" id="currentDate"></p>
+            </div>
         </header>
 
-        <!-- Family Members Section -->
-        <section class="members-section">
-            <div class="members-header">
-                <h3 class="members-title">👥 Family Members</h3>
-                <div class="members-input-group">
-                    <input 
-                        type="text" 
-                        id="memberNameInput" 
-                        placeholder="Add member name..."
-                        class="member-name-input"
-                    >
-                    <button class="btn-add-member" onclick="addFamilyMember()">Add</button>
+        <!-- FAMILY TAB -->
+        <div id="family" class="tab-content">
+            <!-- Family Members Section -->
+            <section class="members-section">
+                <div class="members-header">
+                    <h3 class="members-title">👥 Family Members</h3>
+                    <div class="members-input-group">
+                        <input 
+                            type="text" 
+                            id="memberNameInput" 
+                            placeholder="Add member name..."
+                            class="member-name-input"
+                        >
+                        <button class="btn-add-member" onclick="addFamilyMember()">Add</button>
+                    </div>
                 </div>
-            </div>
-            <div class="members-list" id="membersList"></div>
-        </section>
-
-        <!-- Tab Navigation -->
-        <nav class="tab-navigation">
-            <button class="tab-btn active" data-tab="dashboard">
-                📊 Dashboard
-            </button>
-            <button class="tab-btn" data-tab="calendar">
-                📅 Calendar
-            </button>
-            <button class="tab-btn" data-tab="add-chore">
-                ➕ Add Chore
-            </button>
-            <button class="tab-btn" data-tab="rewards">
-                💎 Rewards
-            </button>
-            <button class="tab-btn" data-tab="leaderboard">
-                🏆 Leaderboard
-            </button>
-        </nav>
+                <div class="members-list" id="membersList"></div>
+            </section>
+        </div>
 
         <!-- DASHBOARD TAB -->
         <div id="dashboard" class="tab-content active">
