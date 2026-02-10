@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChoreFlow - Family Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">🏠 ChoreFlow</h1>
+            <p class="subtitle">Family Task Manager</p>
+            <p class="date" id="currentDate"></p>
+        </header>
+
+        <!-- Family Members Section -->
+        <section class="members-section">
+            <div class="members-header">
+                <h3 class="members-title">👥 Family Members</h3>
+                <div class="members-input-group">
+                    <input 
+                        type="text" 
+                        id="memberNameInput" 
+                        placeholder="Add member name..."
+                        class="member-name-input"
+                    >
+                    <button class="btn-add-member" onclick="addFamilyMember()">Add</button>
+                </div>
+            </div>
+            <div class="members-list" id="membersList"></div>
+        </section>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-navigation">
+            <button class="tab-btn active" data-tab="dashboard">
+                📊 Dashboard
+            </button>
+            <button class="tab-btn" data-tab="calendar">
+                📅 Calendar
+            </button>
+            <button class="tab-btn" data-tab="add-chore">
+                ➕ Add Chore
+            </button>
+            <button class="tab-btn" data-tab="rewards">
+                💎 Rewards
+            </button>
+            <button class="tab-btn" data-tab="leaderboard">
+                🏆 Leaderboard
+            </button>
+        </nav>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <!-- Summary Section -->
+            <section class="summary">
+                <div class="summary-card">
+                    <span class="summary-label">Total Tasks</span>
+                    <span class="summary-value" id="totalTasks">0</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Pending</span>
+                    <span class="summary-value pending" id="pendingTasks">0</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-label">Completed</span>
+                    <span class="summary-value completed" id="completedTasks">0</span>
+                </div>
+            </section>
+
+            <!-- Progress Bar -->
+            <section class="progress-section">
+                <div class="progress-header">
+                    <span class="level-text">Team Progress</span>
+                    <span class="level-percentage" id="levelPercentage">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </section>
+
+            <!-- Chores List -->
+            <section class="chores-section">
+                <div class="chores-header">
+                    <h2 class="section-title">Shared Tasks</h2>
+                    <div class="quick-action-buttons">
+                        <button class="quick-action-btn" onclick="nudgeAssignee()">📢 Nudge</button>
+                        <button class="quick-action-btn delete-btn" onclick="if(confirm('Clear all completed tasks?')) clearAllCompleted();">🗑️ Clear</button>
+                    </div>
+                </div>
+                <div class="chores-list" id="choresList"></div>
+                <div class="empty-state" id="emptyState">
+                    <p>🎯 No tasks yet. Add one to get started!</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- CALENDAR TAB -->
+        <div id="calendar" class="tab-content">
+            <section class="calendar-section">
+                <div class="calendar-header">
+                    <button class="calendar-nav-btn" id="prevMonth">◀ Previous</button>
+                    <h2 class="calendar-month-year" id="calendarMonthYear"></h2>
+                    <button class="calendar-nav-btn" id="nextMonth">Next ▶</button>
+                </div>
+                
+                <div class="calendar-container">
+                    <div class="calendar-weekdays">
+                        <div class="weekday">Sun</div>
+                        <div class="weekday">Mon</div>
+                        <div class="weekday">Tue</div>
+                        <div class="weekday">Wed</div>
+                        <div class="weekday">Thu</div>
+                        <div class="weekday">Fri</div>
+                        <div class="weekday">Sat</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+
+                <div class="calendar-tasks-section" id="calendarTasksSection" style="display: none;">
+                    <h3 class="calendar-selected-date" id="calendarSelectedDate"></h3>
+                    <div class="calendar-tasks-list" id="calendarTasksList"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ADD CHORE TAB -->
+        <div id="add-chore" class="tab-content">
+            <section class="form-section">
+                <h2 class="section-title">Add New Chore</h2>
+                <form class="chore-form" id="choreForm">
+                    <!-- Chore Name -->
+                    <div class="form-group">
+                        <label for="choreInput">Chore Name *</label>
+                        <input 
+                            type="text" 
+                            id="choreInput" 
+                            placeholder="e.g., Take out the trash..." 
+                            class="chore-input"
+                            required
+                        >
+                    </div>
+
+                    <!-- Member Assignment -->
+                    <div class="form-group">
+                        <label for="memberSelect">Assign To *</label>
+                        <select id="memberSelect" class="member-select" required>
+                            <option value="">Select a family member...</option>
+                        </select>
+                    </div>
+
+                    <!-- Frequency -->
+                    <div class="form-group">
+                        <label for="frequencySelect">Frequency *</label>
+                        <select id="frequencySelect" class="frequency-select" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <!-- Due Date -->
+                    <div class="form-group">
+                        <label for="dueDateInput">Due Date *</label>
+                        <input 
+                            type="date" 
+                            id="dueDateInput" 
+                            class="date-input"
+                            required
+                        >
+                    </div>
+                    <!-- Priority -->
+                    <div class="form-group">
+                        <label for="priorityInput">Priority (1-5) *</label>
+                        <div class="priority-input-group">
+                            <input 
+                                type="number" 
+                                id="priorityInput" 
+                                min="1" 
+                                max="5" 
+                                value="3"
+                                class="priority-number-input"
+                                required
+                            >
+                            <span class="priority-label" id="priorityLabel">Medium</span>
+                        </div>
+                        <div class="priority-scale">
+                            <span>1 (Not Urgent)</span>
+                            <span>5 (Immediate)</span>
+                        </div>
+                    </div>
+
+                    <!-- Repeat Pattern -->
+                    <div class="form-group">
+                        <label for="repeatSelect">Repeat Pattern</label>
+                        <select id="repeatSelect" class="repeat-select">
+                            <option value="none">One-time</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Note -->
+                    <div class="form-group">
+                        <label for="statusNote">Completion Note (Optional)</label>
+                        <textarea 
+                            id="statusNote" 
+                            placeholder="e.g., 'Cleaned under the couch too' or attach proof"
+                            class="status-note-input"
+                            rows="3"
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="add-btn">✨ Add Chore</button>
+                </form>
+            </section>
+        </div>
+
+        <!-- REWARDS TAB -->
+        <div id="rewards" class="tab-content">
+            <section class="rewards-section">
+                <div class="rewards-header">
+                    <h2 class="section-title">💎 Reward Shop</h2>
+                    <div class="member-points-display" id="memberPointsDisplay"></div>
+                </div>
+
+                <div class="rewards-grid" id="rewardsGrid">
+                    <!-- Rewards will be populated here -->
+                </div>
+
+                <div class="your-rewards-section">
+                    <h3 class="section-title">📦 Your Redeemed Rewards</h3>
+                    <div class="your-rewards-list" id="yourRewardsList"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- LEADERBOARD TAB -->
+        <div id="leaderboard" class="tab-content">
+            <section class="leaderboard-section">
+                <h2 class="section-title">🏆 Weekly Leaderboard</h2>
+                <div class="leaderboard-container">
+                    <div class="leaderboard-list" id="leaderboardList"></div>
+                    <div class="leaderboard-empty" id="leaderboardEmpty">
+                        <p>Complete some chores to see the leaderboard!</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
