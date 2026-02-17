@@ -62,7 +62,7 @@ function removeFamilyMember(memberId) {
 }
 
 function getAvatarForMember(index) {
-    const avatars = ['👨', '👩', '👦', '👧', '👶', '🧒', '👨‍💼', '👩‍💼'];
+    const avatars = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
     return avatars[index % avatars.length];
 }
 
@@ -124,6 +124,12 @@ function getMemberAvatar(memberId) {
     return member ? member.avatar : '?';
 }
 
+// Extract current member ID from select dropdown
+function extractCurrentMemberId() {
+    const memberSelect = document.getElementById('memberSelect');
+    return memberSelect ? memberSelect.value : null;
+}
+
 // Recurring Tasks Management
 function checkAndResetRecurringTasks() {
     let chores = getChores();
@@ -182,16 +188,101 @@ function savePoints(points) {
     localStorage.setItem('familyPoints', JSON.stringify(points));
 }
 
-function getRewards() {
-    const rewards = localStorage.getItem('rewards');
-    return rewards ? JSON.parse(rewards) : [
-        { id: 'movie', emoji: '🎬', name: 'Pick the Movie', description: 'Choose tonight\'s movie', cost: 100 },
-        { id: 'snack', emoji: '🍿', name: 'Special Snack', description: 'Get a special treat', cost: 75 },
-        { id: 'bedtime', emoji: '⏰', name: 'Later Bedtime', description: 'Stay up 1 hour later', cost: 150 },
-        { id: 'game', emoji: '🎮', name: 'Extra Game Time', description: '30 minutes extra screen time', cost: 120 },
-        { id: 'pizza', emoji: '🍕', name: 'Pizza Night', description: 'Choose pizza toppings', cost: 200 },
-        { id: 'trip', emoji: '🚗', name: 'Family Outing', description: 'Plan a small outing', cost: 300 }
+function getDefaultRewards() {
+    return [
+        { id: 'movie', emoji: '▶', name: 'Pick the Movie', description: 'Choose tonight\'s movie', cost: 100, isDefault: true },
+        { id: 'snack', emoji: '🍿', name: 'Special Snack', description: 'Get a special treat', cost: 75, isDefault: true },
+        { id: 'bedtime', emoji: '☀', name: 'Later Bedtime', description: 'Stay up 1 hour later', cost: 150, isDefault: true },
+        { id: 'game', emoji: '▮', name: 'Extra Game Time', description: '30 minutes extra screen time', cost: 120, isDefault: true },
+        { id: 'pizza', emoji: '⬚', name: 'Pizza Night', description: 'Choose pizza toppings', cost: 200, isDefault: true },
+        { id: 'trip', emoji: '»', name: 'Family Outing', description: 'Plan a small outing', cost: 300, isDefault: true }
     ];
+}
+
+function getDeletedDefaultRewards() {
+    const deleted = localStorage.getItem('deletedDefaultRewards');
+    return deleted ? JSON.parse(deleted) : [];
+}
+
+function saveDeletedDefaultRewards(deletedIds) {
+    localStorage.setItem('deletedDefaultRewards', JSON.stringify(deletedIds));
+}
+
+function getCustomRewards() {
+    const rewards = localStorage.getItem('customRewards');
+    return rewards ? JSON.parse(rewards) : [];
+}
+
+function getRewards() {
+    const deleted = getDeletedDefaultRewards();
+    const defaultRewards = getDefaultRewards().filter(r => !deleted.includes(r.id));
+    return [...defaultRewards, ...getCustomRewards()];
+}
+
+function saveCustomRewards(rewards) {
+    localStorage.setItem('customRewards', JSON.stringify(rewards));
+}
+
+function addCustomReward(emoji, name, cost, description) {
+    const customRewards = getCustomRewards();
+    const newReward = {
+        id: 'custom-' + Date.now(),
+        emoji: emoji,
+        name: name,
+        description: description || '',
+        cost: parseInt(cost),
+        isDefault: false
+    };
+    customRewards.push(newReward);
+    saveCustomRewards(customRewards);
+    return newReward;
+}
+
+function deleteReward(rewardId) {
+    const allRewards = [...getDefaultRewards(), ...getCustomRewards()];
+    const reward = allRewards.find(r => r.id === rewardId);
+    
+    if (reward && reward.isDefault) {
+        const deleted = getDeletedDefaultRewards();
+        if (!deleted.includes(rewardId)) {
+            deleted.push(rewardId);
+            saveDeletedDefaultRewards(deleted);
+        }
+    } else {
+        const customRewards = getCustomRewards();
+        const filtered = customRewards.filter(r => r.id !== rewardId);
+        saveCustomRewards(filtered);
+    }
+}
+
+function createConfetti() {
+    const colors = ['🎉', '✨', '🎊', '⭐', '🌟'];
+    const confettiPieces = 25;
+    
+    for (let i = 0; i < confettiPieces; i++) {
+        const confetti = document.createElement('div');
+        confetti.textContent = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.cssText = `
+            position: fixed;
+            left: ${Math.random() * 100}%;
+            top: -10px;
+            font-size: 1.5rem;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 1;
+        `;
+        document.body.appendChild(confetti);
+        
+        const animation = confetti.animate([
+            { transform: 'translateY(0) rotate(0)', opacity: 1 },
+            { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+        ], {
+            duration: 2000 + Math.random() * 1000,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+        });
+        
+        animation.onfinish = () => confetti.remove();
+    }
 }
 
 function getRedeemedRewards() {
@@ -239,10 +330,111 @@ function redeemReward(rewardId) {
     updateMemberPointsDisplay();
 }
 
-// Extract current member from member select (for rewards)
-function extractCurrentMemberId() {
-    const memberSelect = document.getElementById('memberSelect');
-    return memberSelect ? memberSelect.value : null;
+// Apply preset task
+function applyPreset(presetType, taskName) {
+    document.getElementById('choreInput').value = taskName;
+    document.getElementById('repeatSelect').value = 'daily';
+    updateDateLabel();
+    document.getElementById('priorityInput').value = '3';
+    document.getElementById('priorityLabel').textContent = 'Medium';
+    document.getElementById('statusNote').value = '';
+    document.getElementById('choreInput').focus();
+}
+
+function updateDateLabel() {
+    const repeatSelect = document.getElementById('repeatSelect');
+    const dateLabel = document.getElementById('dateLabel');
+    const value = repeatSelect.value;
+    
+    if (value === 'none') {
+        dateLabel.textContent = 'Due Date';
+    } else {
+        dateLabel.textContent = 'Start Date';
+    }
+}
+
+// Check if a chore should appear on a given date
+function shouldChoreAppearOnDate(chore, dateStr) {
+    const choreDate = new Date(chore.dueDate + 'T00:00:00');
+    const checkDate = new Date(dateStr + 'T00:00:00');
+    
+    if (chore.repeat === 'none') {
+        return chore.dueDate === dateStr;
+    }
+    
+    if (checkDate < choreDate) {
+        return false;
+    }
+    
+    switch (chore.repeat) {
+        case 'daily':
+            return true;
+        case 'weekly': {
+            const diffTime = Math.abs(checkDate - choreDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays % 7 === 0;
+        }
+        case 'monthly': {
+            return choreDate.getDate() === checkDate.getDate();
+        }
+        default:
+            return chore.dueDate === dateStr;
+    }
+}
+
+// Calculate weekly points for a member
+function getWeeklyPoints(memberId) {
+    const chores = getChores();
+    const today = new Date();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay()); // Sunday
+    weekStart.setHours(0, 0, 0, 0);
+    
+    let weeklyPoints = 0;
+    
+    chores.forEach(chore => {
+        if (chore.member === memberId && chore.completed && chore.completionDates && chore.completionDates.length > 0) {
+            chore.completionDates.forEach(dateStr => {
+                const completionDate = new Date(dateStr);
+                if (completionDate >= weekStart && completionDate < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+                    const pointsAwarded = 10 + (chore.priority * 5);
+                    weeklyPoints += pointsAwarded;
+                }
+            });
+        }
+    });
+    
+    return weeklyPoints;
+}
+
+// Update weekly points display
+function updateWeeklyPointsDisplay() {
+    const grid = document.getElementById('weeklyPointsGrid');
+    const members = getMembers();
+    
+    grid.innerHTML = '';
+    
+    if (members.length === 0) {
+        grid.innerHTML = '<div class="empty-weekly-points">Add family members to see weekly points</div>';
+        return;
+    }
+    
+    const memberPointsData = members.map(member => ({
+        ...member,
+        weeklyPoints: getWeeklyPoints(member.id)
+    })).sort((a, b) => b.weeklyPoints - a.weeklyPoints);
+    
+    memberPointsData.forEach(member => {
+        const card = document.createElement('div');
+        card.className = 'weekly-points-card';
+        card.innerHTML = `
+            <div class="member-avatar-circle">${member.avatar}</div>
+            <div class="member-name-small">${member.name}</div>
+            <div class="weekly-points-value">${member.weeklyPoints}</div>
+            <div class="weekly-points-label">Points</div>
+        `;
+        grid.appendChild(card);
+    });
 }
 
 // Populate rewards grid
@@ -260,7 +452,10 @@ function populateRewards() {
         const card = document.createElement('div');
         card.className = `reward-card ${!canAfford ? 'locked' : ''}`;
         
+        let deleteBtn = `<button class="delete-reward-btn" onclick="deleteCustomReward('${reward.id}')" title="Delete reward">✕</button>`;
+        
         card.innerHTML = `
+            ${deleteBtn}
             <div class="reward-emoji">${reward.emoji}</div>
             <div class="reward-name">${reward.name}</div>
             <div class="reward-description">${reward.description}</div>
@@ -325,6 +520,111 @@ function displayRedeemedRewards() {
 // Calendar state
 let currentCalendarDate = new Date();
 
+// Delete custom reward
+function deleteCustomReward(rewardId) {
+    const confirmMsg = 'Delete this reward?';
+    if (confirm(confirmMsg)) {
+        deleteReward(rewardId);
+        populateRewards();
+    }
+}
+
+// Handle add reward form 
+function handleAddRewardForm(e) {
+    e.preventDefault();
+    const emoji = document.getElementById('rewardEmoji').value.trim();
+    const name = document.getElementById('rewardName').value.trim();
+    const cost = document.getElementById('rewardCost').value.trim();
+    const description = document.getElementById('rewardDesc').value.trim();
+    
+    if (!emoji || !name || !cost) {
+        alert('Please fill in all required fields!');
+        return;
+    }
+    
+    addCustomReward(emoji, name, cost, description);
+    document.getElementById('addRewardForm').reset();
+    populateRewards();
+}
+
+// Photo Proof System
+function getChorePhotos(choreId) {
+    const photos = localStorage.getItem(`chore-photos-${choreId}`);
+    return photos ? JSON.parse(photos) : [];
+}
+
+function saveChorePhotos(choreId, photos) {
+    localStorage.setItem(`chore-photos-${choreId}`, JSON.stringify(photos));
+}
+
+function openPhotoCapture(choreId) {
+    const fileInput = document.getElementById(`photo-input-${choreId}`);
+    if (fileInput) {
+        fileInput.click();
+    }
+}
+
+function handlePhotoCapture(e, choreId) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file size (max 2MB)
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+        alert('📷 Photo is too large! Maximum file size is 2MB. Please choose a smaller image.');
+        e.target.value = '';
+        return;
+    }
+    
+    try {
+        const reader = new FileReader();
+        reader.onerror = () => {
+            alert('❌ Failed to read the image file. Please try another image.');
+        };
+        reader.onload = (event) => {
+            try {
+                const base64Photo = event.target.result;
+                const photos = getChorePhotos(choreId);
+                photos.push(base64Photo);
+                
+                // Check localStorage before saving
+                const estimatedSize = JSON.stringify(photos).length;
+                if (estimatedSize > 5 * 1024 * 1024) {
+                    alert('⚠️ Storage limit reached! You have too many large photos. Please delete some photos from old tasks.');
+                    e.target.value = '';
+                    return;
+                }
+                
+                saveChorePhotos(choreId, photos);
+                loadChores();
+                showPhotoFeedback();
+            } catch (err) {
+                console.error('Error processing photo:', err);
+                alert('❌ Error saving photo. Storage may be full.');
+            }
+        };
+        reader.readAsDataURL(file);
+    } catch (err) {
+        console.error('Error reading file:', err);
+        alert('❌ Could not read the file. Please try again.');
+    }
+    
+    // Reset input so same file can be selected again
+    e.target.value = '';
+}
+
+function showPhotoFeedback() {
+    const feedback = document.createElement('div');
+    feedback.className = 'photo-feedback';
+    feedback.textContent = '✓ Photo saved!';
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+        feedback.classList.add('fade-out');
+        setTimeout(() => feedback.remove(), 300);
+    }, 2000);
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
     displayCurrentDate();
@@ -337,6 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSummary();
     updateProgressBar();
     updateLeaderboard();
+    updateWeeklyPointsDisplay();
     initializeCalendar();
     populateRewards();
     updateMemberPointsDisplay();
@@ -393,6 +694,12 @@ function setupEventListeners() {
         });
     }
 
+    // Add reward form listener
+    const addRewardForm = document.getElementById('addRewardForm');
+    if (addRewardForm) {
+        addRewardForm.addEventListener('submit', handleAddRewardForm);
+    }
+
     // Calendar navigation
     document.getElementById('prevMonth').addEventListener('click', () => {
         currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
@@ -419,14 +726,13 @@ function addChore(e) {
 
     const choreInput = document.getElementById('choreInput');
     const memberSelect = document.getElementById('memberSelect');
-    const frequencySelect = document.getElementById('frequencySelect');
     const priorityInput = document.getElementById('priorityInput');
     const dueDateInput = document.getElementById('dueDateInput');
     const repeatSelect = document.getElementById('repeatSelect');
     const statusNote = document.getElementById('statusNote');
 
     if (choreInput.value.trim() === '') {
-        alert('Please enter a chore name!');
+        alert('Please enter a task name!');
         return;
     }
 
@@ -436,7 +742,7 @@ function addChore(e) {
     }
 
     if (!dueDateInput.value) {
-        alert('Please select a due date!');
+        alert('Please select a start date!');
         return;
     }
 
@@ -451,7 +757,7 @@ function addChore(e) {
         id: Date.now(),
         text: choreInput.value.trim(),
         member: memberSelect.value,
-        frequency: frequencySelect.value,
+        frequency: 'general',
         priority: priority,
         dueDate: dueDateInput.value,
         repeat: repeatSelect.value || 'none',
@@ -465,12 +771,12 @@ function addChore(e) {
     saveChore(chore);
     choreInput.value = '';
     memberSelect.value = '';
-    frequencySelect.value = 'weekly';
+    repeatSelect.value = 'weekly';
     priorityInput.value = '3';
     dueDateInput.value = '';
-    repeatSelect.value = 'none';
     statusNote.value = '';
     document.getElementById('priorityLabel').textContent = 'Medium';
+    updateDateLabel();
     
     // Switch to dashboard tab
     document.querySelector('[data-tab="dashboard"]').click();
@@ -479,6 +785,7 @@ function addChore(e) {
     updateSummary();
     updateProgressBar();
     updateLeaderboard();
+    updateWeeklyPointsDisplay();
     renderCalendar();
 }
 
@@ -558,11 +865,18 @@ function createChoreCard(chore) {
 
     const overdueBadge = isOverdue ? '<span class="overdue-badge">⚠️ Overdue</span>' : '';
     const statusDisplay = chore.statusNote ? `<div class="status-note-display">📝 ${escapeHtml(chore.statusNote)}</div>` : '';
+    
+    // Check if photo exists for this chore
+    const photos = getChorePhotos(chore.id);
+    const photoThumbnail = photos.length > 0 ? 
+        `<img src="${photos[photos.length - 1]}" class="photo-proof-thumbnail" alt="Photo proof" title="Photo proof">` 
+        : '';
 
     card.innerHTML = `
         <input 
             type="checkbox" 
             class="chore-checkbox" 
+            data-chore-id="${chore.id}"
             ${chore.completed ? 'checked' : ''}
             onchange="toggleChore(${chore.id})"
         >
@@ -586,8 +900,14 @@ function createChoreCard(chore) {
                 ${overdueBadge}
             </div>
             ${statusDisplay}
+            <div class="chore-proof-section">
+                ${photoThumbnail}
+            </div>
         </div>
         <div class="chore-actions">
+            <button class="btn-photo" onclick="openPhotoCapture(${chore.id})" title="Add photo proof">
+                📸
+            </button>
             <button class="btn-complete" onclick="toggleChore(${chore.id})">
                 ${chore.completed ? '✓ Done' : 'Complete'}
             </button>
@@ -596,6 +916,16 @@ function createChoreCard(chore) {
             </button>
         </div>
     `;
+    
+    // Add hidden file input for camera
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.capture = 'environment';
+    fileInput.id = `photo-input-${chore.id}`;
+    fileInput.style.display = 'none';
+    fileInput.addEventListener('change', (e) => handlePhotoCapture(e, chore.id));
+    card.appendChild(fileInput);
 
     return card;
 }
@@ -606,6 +936,18 @@ function toggleChore(id) {
     const chore = chores.find(c => c.id === id);
 
     if (chore) {
+        // Check if trying to complete without a photo
+        if (!chore.completed) {
+            const photos = getChorePhotos(id);
+            if (photos.length === 0) {
+                alert('📸 Please add a photo proof before marking this task as complete!');
+                // Uncheck the checkbox - using data attribute for reliability
+                const checkbox = document.querySelector(`input[data-chore-id="${id}"]`);
+                if (checkbox) checkbox.checked = false;
+                return;
+            }
+        }
+        
         chore.completed = !chore.completed;
         
         // Track completion dates for leaderboard
@@ -619,9 +961,12 @@ function toggleChore(id) {
             // Award points
             const points = getPoints();
             const memberId = chore.member;
-            const pointsAwarded = 10 + (chore.priority * 5); // 15-35 points based on priority
+            const pointsAwarded = 10 + (chore.priority * 5);
             points[memberId] = (points[memberId] || 0) + pointsAwarded;
             savePoints(points);
+            
+            // Add celebration effect
+            createConfetti();
         } else {
             // Deduct points if uncompleting
             const points = getPoints();
@@ -636,6 +981,7 @@ function toggleChore(id) {
         updateSummary();
         updateProgressBar();
         updateLeaderboard();
+        updateWeeklyPointsDisplay();
         renderCalendar();
         updateMemberPointsDisplay();
         displayRedeemedRewards();
@@ -652,6 +998,7 @@ function deleteChore(id) {
         updateSummary();
         updateProgressBar();
         updateLeaderboard();
+        updateWeeklyPointsDisplay();
         renderCalendar();
     }
 }
@@ -665,6 +1012,7 @@ function clearAllCompleted() {
     updateSummary();
     updateProgressBar();
     updateLeaderboard();
+    updateWeeklyPointsDisplay();
     renderCalendar();
 }
 
@@ -856,8 +1204,8 @@ function renderCalendar() {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
         
-        // Get tasks for this date
-        const dayChores = chores.filter(c => c.dueDate === dateStr);
+        // Get tasks for this date (including recurring tasks)
+        const dayChores = chores.filter(c => shouldChoreAppearOnDate(c, dateStr));
         
         let classes = '';
         if (isToday) classes += 'today ';
@@ -922,10 +1270,17 @@ function showDayTasks(dateStr, dayChores) {
             const frequencyLabels = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
             const priorityValue = parseInt(chore.priority) || 3;
             
+            // Check if photo exists for this chore
+            const photos = getChorePhotos(chore.id);
+            const photoThumbnail = photos.length > 0 ? 
+                `<img src="${photos[photos.length - 1]}" class="photo-proof-thumbnail" alt="Photo proof" title="Photo proof">` 
+                : '';
+            
             taskCard.innerHTML = `
                 <input 
                     type="checkbox" 
                     class="task-checkbox" 
+                    data-chore-id="${chore.id}"
                     ${chore.completed ? 'checked' : ''}
                     onchange="handleCalendarTaskToggle(${chore.id})"
                 >
@@ -937,9 +1292,23 @@ function showDayTasks(dateStr, dayChores) {
                         <span style="background: var(--bg-tertiary); color: var(--text-tertiary); border: 1px solid var(--border-color); padding: 2px 8px; border-radius: 3px; font-family: 'JetBrains Mono', monospace;">P${priorityValue}</span>
                     </div>
                 </div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+                    <button class="btn-photo" onclick="openPhotoCapture(${chore.id})" title="Add photo proof">📸</button>
+                    ${photoThumbnail}
+                </div>
             `;
             
+            // Add hidden file input for camera
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.capture = 'environment';
+            fileInput.id = `photo-input-${chore.id}`;
+            fileInput.style.display = 'none';
+            fileInput.addEventListener('change', (e) => handlePhotoCapture(e, chore.id));
+            
             tasksList.appendChild(taskCard);
+            tasksList.appendChild(fileInput);
         });
     }
     

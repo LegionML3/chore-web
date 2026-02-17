@@ -11,26 +11,26 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1 class="title">🏠 Axis Chores</h1>
+                <h1 class="title">Axis Chores</h1>
             </div>
             <nav class="header-nav">
                 <button class="tab-btn active" data-tab="dashboard">
-                    📊 Dashboard
+                    Dashboard
                 </button>
                 <button class="tab-btn" data-tab="calendar">
-                    📅 Calendar
+                    Calendar
                 </button>
                 <button class="tab-btn" data-tab="add-chore">
-                    ➕ Add Chore
+                    Add Chore
                 </button>
                 <button class="tab-btn" data-tab="rewards">
-                    💎 Rewards
+                    Rewards
                 </button>
                 <button class="tab-btn" data-tab="leaderboard">
-                    🏆 Leaderboard
+                    Leaderboard
                 </button>
                 <button class="tab-btn" data-tab="family">
-                    👥 Family
+                    Family
                 </button>
             </nav>
             <div class="header-right">
@@ -43,7 +43,7 @@
             <!-- Family Members Section -->
             <section class="members-section">
                 <div class="members-header">
-                    <h3 class="members-title">👥 Family Members</h3>
+                    <h3 class="members-title">Family Members</h3>
                     <div class="members-input-group">
                         <input 
                             type="text" 
@@ -87,18 +87,24 @@
                 </div>
             </section>
 
+            <!-- Weekly Points Summary -->
+            <section class="weekly-points-section">
+                <h3 class="weekly-points-title">This Week's Points</h3>
+                <div class="weekly-points-grid" id="weeklyPointsGrid"></div>
+            </section>
+
             <!-- Chores List -->
             <section class="chores-section">
                 <div class="chores-header">
                     <h2 class="section-title">Shared Tasks</h2>
                     <div class="quick-action-buttons">
-                        <button class="quick-action-btn" onclick="nudgeAssignee()">📢 Nudge</button>
-                        <button class="quick-action-btn delete-btn" onclick="if(confirm('Clear all completed tasks?')) clearAllCompleted();">🗑️ Clear</button>
+                        <button class="quick-action-btn" onclick="nudgeAssignee()">Nudge</button>
+                        <button class="quick-action-btn delete-btn" onclick="if(confirm('Clear all completed tasks?')) clearAllCompleted();">Clear</button>
                     </div>
                 </div>
                 <div class="chores-list" id="choresList"></div>
                 <div class="empty-state" id="emptyState">
-                    <p>🎯 No tasks yet. Add one to get started!</p>
+                    <p>No tasks yet. Add one to get started!</p>
                 </div>
             </section>
         </div>
@@ -107,9 +113,9 @@
         <div id="calendar" class="tab-content">
             <section class="calendar-section">
                 <div class="calendar-header">
-                    <button class="calendar-nav-btn" id="prevMonth">◀ Previous</button>
+                    <button class="calendar-nav-btn" id="prevMonth">← Previous</button>
                     <h2 class="calendar-month-year" id="calendarMonthYear"></h2>
-                    <button class="calendar-nav-btn" id="nextMonth">Next ▶</button>
+                    <button class="calendar-nav-btn" id="nextMonth">Next →</button>
                 </div>
                 
                 <div class="calendar-container">
@@ -135,15 +141,29 @@
         <!-- ADD CHORE TAB -->
         <div id="add-chore" class="tab-content">
             <section class="form-section">
-                <h2 class="section-title">Add New Chore</h2>
+                <h2 class="section-title">Add New Task</h2>
+                
+                <!-- Quick Presets for Common Repetitive Tasks -->
+                <div class="quick-presets">
+                    <p class="presets-label">Quick Presets:</p>
+                    <div class="preset-buttons">
+                        <button type="button" class="preset-btn" onclick="applyPreset('bed', 'Make the bed')">Make the bed</button>
+                        <button type="button" class="preset-btn" onclick="applyPreset('dishes', 'Do the dishes')">Do dishes</button>
+                        <button type="button" class="preset-btn" onclick="applyPreset('laundry', 'Do laundry')">Laundry</button>
+                        <button type="button" class="preset-btn" onclick="applyPreset('trash', 'Take out trash')">Trash</button>
+                        <button type="button" class="preset-btn" onclick="applyPreset('sweep', 'Sweep/Vacuum')">Sweep</button>
+                        <button type="button" class="preset-btn" onclick="applyPreset('clean', 'Clean room')">Clean room</button>
+                    </div>
+                </div>
+                
                 <form class="chore-form" id="choreForm">
                     <!-- Chore Name -->
                     <div class="form-group">
-                        <label for="choreInput">Chore Name *</label>
+                        <label for="choreInput">Task Name *</label>
                         <input 
                             type="text" 
                             id="choreInput" 
-                            placeholder="e.g., Take out the trash..." 
+                            placeholder="e.g., Make the bed..." 
                             class="chore-input"
                             required
                         >
@@ -157,26 +177,29 @@
                         </select>
                     </div>
 
-                    <!-- Frequency -->
+                    <!-- Repeat Pattern (Consolidated) -->
                     <div class="form-group">
-                        <label for="frequencySelect">Frequency *</label>
-                        <select id="frequencySelect" class="frequency-select" required>
-                            <option value="daily">Daily</option>
-                            <option value="weekly" selected>Weekly</option>
-                            <option value="monthly">Monthly</option>
+                        <label for="repeatSelect">Frequency *</label>
+                        <select id="repeatSelect" class="repeat-select" required onchange="updateDateLabel()">
+                            <option value="none">One-time only</option>
+                            <option value="daily">Daily (repeats every day)</option>
+                            <option value="weekly" selected>Weekly (repeats every week)</option>
+                            <option value="monthly">Monthly (repeats every month)</option>
                         </select>
                     </div>
 
                     <!-- Due Date -->
                     <div class="form-group">
-                        <label for="dueDateInput">Due Date *</label>
+                        <label for="dueDateInput"><span id="dateLabel">Start Date</span> *</label>
                         <input 
                             type="date" 
                             id="dueDateInput" 
                             class="date-input"
                             required
                         >
+                        <small style="color: var(--text-tertiary); margin-top: 4px; display: block;">First occurrence date</small>
                     </div>
+
                     <!-- Priority -->
                     <div class="form-group">
                         <label for="priorityInput">Priority (1-5) *</label>
@@ -198,29 +221,18 @@
                         </div>
                     </div>
 
-                    <!-- Repeat Pattern -->
-                    <div class="form-group">
-                        <label for="repeatSelect">Repeat Pattern</label>
-                        <select id="repeatSelect" class="repeat-select">
-                            <option value="none">One-time</option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                    </div>
-
                     <!-- Status Note -->
                     <div class="form-group">
-                        <label for="statusNote">Completion Note (Optional)</label>
+                        <label for="statusNote">Notes (Optional)</label>
                         <textarea 
                             id="statusNote" 
-                            placeholder="e.g., 'Cleaned under the couch too' or attach proof"
+                            placeholder="e.g., 'Change sheets on Fridays' or add any special instructions"
                             class="status-note-input"
                             rows="3"
                         ></textarea>
                     </div>
 
-                    <button type="submit" class="add-btn">✨ Add Chore</button>
+                    <button type="submit" class="add-btn">Add Task</button>
                 </form>
             </section>
         </div>
@@ -229,8 +241,34 @@
         <div id="rewards" class="tab-content">
             <section class="rewards-section">
                 <div class="rewards-header">
-                    <h2 class="section-title">💎 Reward Shop</h2>
+                    <h2 class="section-title">Reward Shop</h2>
                     <div class="member-points-display" id="memberPointsDisplay"></div>
+                </div>
+
+                <!-- Add Custom Reward Section -->
+                <div class="add-reward-form-container">
+                    <h3 class="form-subtitle">Create Custom Reward</h3>
+                    <form class="add-reward-form" id="addRewardForm">
+                        <div class="reward-form-row">
+                            <div class="form-group reward-form-group">
+                                <label for="rewardEmoji">Emoji</label>
+                                <input type="text" id="rewardEmoji" maxlength="2" placeholder="🎁" class="reward-emoji-input" required>
+                            </div>
+                            <div class="form-group reward-form-group">
+                                <label for="rewardName">Reward Name</label>
+                                <input type="text" id="rewardName" placeholder="e.g., Ice Cream" class="reward-input" required>
+                            </div>
+                            <div class="form-group reward-form-group">
+                                <label for="rewardCost">Point Cost</label>
+                                <input type="number" id="rewardCost" min="10" max="500" placeholder="100" class="reward-input" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="rewardDesc">Description</label>
+                            <input type="text" id="rewardDesc" placeholder="What's this reward about?" class="reward-input">
+                        </div>
+                    <button type="submit" class="add-reward-btn">Add Reward</button>
+                    </form>
                 </div>
 
                 <div class="rewards-grid" id="rewardsGrid">
@@ -238,7 +276,7 @@
                 </div>
 
                 <div class="your-rewards-section">
-                    <h3 class="section-title">📦 Your Redeemed Rewards</h3>
+                    <h3 class="section-title">Your Redeemed Rewards</h3>
                     <div class="your-rewards-list" id="yourRewardsList"></div>
                 </div>
             </section>
@@ -247,7 +285,7 @@
         <!-- LEADERBOARD TAB -->
         <div id="leaderboard" class="tab-content">
             <section class="leaderboard-section">
-                <h2 class="section-title">🏆 Weekly Leaderboard</h2>
+                <h2 class="section-title">Weekly Leaderboard</h2>
                 <div class="leaderboard-container">
                     <div class="leaderboard-list" id="leaderboardList"></div>
                     <div class="leaderboard-empty" id="leaderboardEmpty">
